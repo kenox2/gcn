@@ -2,7 +2,7 @@
 #include "searching_utils.h"
 #include <iostream>
 
-namespace fs = filesystem;
+namespace fs = std::filesystem;
 using namespace std;
 
 fs::path find_gnc_dir(){
@@ -20,7 +20,7 @@ fs::path find_gnc_dir(){
 }
 
 
-fs::path find_file(const string& relative_file_path, bool is_dir = 0){
+fs::path find_file(const string& relative_file_path, bool is_dir){
     fs::path gnc_dir = find_gnc_dir();
     fs::path path = gnc_dir / relative_file_path;
     if(fs::exists(path) && (is_dir ? fs::is_directory(path) : fs::is_regular_file(path))){

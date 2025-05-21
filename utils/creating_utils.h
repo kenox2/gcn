@@ -6,7 +6,13 @@
 #include <string>
 
 
-struct IndexEntry;
+struct IndexEntry {
+    std::string path;
+    uint32_t mode;
+    uint64_t hash;
+};
+
+
 uint64_t create_blob(const std::string& input_path, const std::string& object_dir);
 std::vector<IndexEntry> read_index(const std::string& index_path);
 uint64_t write_tree(const std::string& dir,

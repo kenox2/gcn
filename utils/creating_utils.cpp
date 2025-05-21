@@ -14,12 +14,6 @@ namespace fs = std::filesystem;
 using namespace std;
 
 
-struct IndexEntry {
-    std::string path;
-    uint32_t mode;
-    uint64_t hash;
-};
-
 
 
 uint64_t create_blob(const string& input_path, const string& object_dir) {
@@ -148,7 +142,7 @@ uint64_t create_tree(const string& dir, const string& object_directory, string i
 }
 
 
-int create_commit(const string& base_directory, const string& message, const uint64_t& tree_hash, const string& author, uint64_t parent_hash = 0){
+int create_commit(const string& base_directory, const string& message, const uint64_t& tree_hash, const string& author, uint64_t parent_hash ){
     
     ostringstream buffer;
     string tree_label = "tree";
