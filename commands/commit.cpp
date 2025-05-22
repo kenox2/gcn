@@ -1,0 +1,62 @@
+#include <iostream>
+#include <cstdint>
+#include <string>
+#include "../utils/creating_utils.h"
+#include "../utils/searching_utils.h"
+#include "../utils/reading_utils.h"
+#include <fstream>
+
+namespace fs = std::filesystem;
+
+using namespace std;
+
+int commit(const string& message){
+    
+    //  create commit
+    fs::path cur = fs::current_path();
+    cout << cur.filename();
+    fs::path index = find_file(cur, "INDEX");
+    fs::path HEAD = find_file(cur, "HEAD");
+    // check if INDEX is empty
+    if(fs::file_size(index) == 0){
+        cout << "Nothing to commit: INDEX is empty.\n";
+        return 1; 
+    } 
+    fs::path objects = find_file(cur,"objects", true);
+    fs::path user_data = find_file(cur,"user_data");
+    uint64_t hash_tree = create_tree(objects.string(), index.string());
+    
+    // get information from user_data 
+    ifstream user_file(user_data, ios::in);
+    string name;
+    string email;
+    getline(user_file, name);
+    getline(user_file, email);
+    name = name.substr(5);
+    email = email.substr(6);
+    string author = name + " " + email;
+
+    // get parent hash 
+    pair<uint64_t, string> parent_hash = get_hash_from_HEAD(HEAD);
+    // create commit
+    uint64_t hash_commit = create_commit(objects.string(), message, hash_tree, author, parent_hash.first);
+    // save commit to branch 
+    fs::path branch_path(parent_hash.second);
+    ofstream branch_head(branch_path, ios::binary | ios::out);
+    if(!branch_head){
+        cerr << "Failed to open HEAD\n";
+        exit(1);
+    }
+    branch_head.write(reinterpret_cast<char *>(&parent_hash.second), sizeof(parent_hash.second));
+
+    // empty out INDEX 
+    ofstream(index, ios::binary | ios::out);
+    return 0;
+}
+
+
+
+int main(int argc, char* argv[]){
+    string message = argv[1];
+    return commit(message);
+}

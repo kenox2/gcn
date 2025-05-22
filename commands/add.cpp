@@ -12,16 +12,30 @@ using namespace std;
 int add_to_index(fs::path cur_dir){
     fs::recursive_directory_iterator it(cur_dir);
     fs::path index = find_file(cur_dir,"INDEX");
+    // get the root directory
+    fs::path root = index.parent_path().parent_path();
     fs::path objects = find_file(cur_dir, "objects", true);
     ofstream ind_file(index, ios::out | ios::binary);
+     if (!ind_file) {
+        cerr << "Failed to open index file for writing: " << index << endl;
+        return 1;
+    }
     ostringstream buffer;
     uint32_t count = 0;
 
     for (const auto& entry : it) {
+        cout << "path filename: " << entry.path().filename();
+        cout << "parent filename: " << entry.path().parent_path().filename();
+        cout << "root filename: " << root.filename();
+        
+        if(entry.is_directory() && entry.path().filename() == ".gcn" && fs::absolute(entry.path().parent_path()) == root){
+            it.disable_recursion_pending();
+            continue;
+        }
         if (entry.is_regular_file()) {
             count++;
             uint64_t hash = create_blob(entry.path().string(), objects.string());
-            string path = fs::absolute(entry.path()).string();
+            string path = fs::relative(entry.path(), root).string();
             uint16_t path_len = path.size();
             buffer.write(reinterpret_cast<char*>(&path_len), sizeof(path_len));
             buffer.write(path.data(), path.size());

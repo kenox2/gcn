@@ -9,6 +9,8 @@
 #include <cstdint>
 #include "./hashing_utils.h"
 #include "creating_utils.h"
+#include "../utils/constants.h"
+#include "searching_utils.h"
 
 namespace fs = std::filesystem;
 using namespace std;
@@ -100,11 +102,13 @@ uint64_t write_tree(const string& dir,
         }
     }
 
-    for (const auto& [subdir, _] : trees) {
+    for (const auto& [subdir, entry] : trees) {
+        bool ez = fs::path(subdir).empty();
         if (fs::path(subdir).parent_path().string() == dir) {
+            
             uint64_t sub_hash = write_tree(subdir, object_directory, trees, entries);
 
-            uint32_t mode = 040000;
+            uint32_t mode = static_cast<uint32_t>(FileMode::Tree);
             string dirname = fs::path(subdir).filename().string();
 
             buffer.write(reinterpret_cast<const char*>(&mode), sizeof(mode));
@@ -127,7 +131,8 @@ uint64_t write_tree(const string& dir,
 
 
 
-uint64_t create_tree(const string& dir, const string& object_directory, string index_path) {
+uint64_t create_tree(const string& object_directory,const string& index_path) {
+    fs::path root = find_gnc_dir(fs::path(object_directory)).parent_path();
     vector<IndexEntry> entries = read_index(index_path);
     sort(entries.begin(), entries.end(),[](const IndexEntry& a, const IndexEntry& b){
         return a.path < b.path;
@@ -135,18 +140,18 @@ uint64_t create_tree(const string& dir, const string& object_directory, string i
     map<string, vector<IndexEntry>> trees;
     for (const auto& entry : entries) {
         fs::path p(entry.path);
-        trees[p.parent_path().string()].push_back(entry);
+        trees[(root / p).parent_path().string()].push_back(entry);
     }
-    return write_tree(dir, object_directory, trees, entries);
+    return write_tree("", object_directory, trees, entries);
 
 }
 
 
-int create_commit(const string& base_directory, const string& message, const uint64_t& tree_hash, const string& author, uint64_t parent_hash ){
+int create_commit(const string& base_directory, const string& message, const uint64_t& tree_hash, const string& author, const uint64_t& parent_hash ){
     
     ostringstream buffer;
-    string tree_label = "tree";
-    buffer.write(tree_label.c_str(), tree_label.size() + 1);
+    uint32_t tree_label = static_cast<uint32_t>(FileMode::Tree);
+    buffer.write(reinterpret_cast<const char*>(&tree_label),sizeof(tree_label));
     buffer.write(reinterpret_cast<const char*>(&tree_hash), sizeof(tree_hash));
 
     if (parent_hash != 0) {

@@ -15,6 +15,11 @@ fs::path find_gnc_dir(const fs::path& cur_dir){
             return candidate;
         }
         curr = curr.parent_path();
+         fs::path parent = curr.parent_path();
+        if (parent == curr) {
+            break;  // We've reached the root
+        }
+    curr = parent;
     }
     throw std::runtime_error("This is not a gcn repository.");
 }
