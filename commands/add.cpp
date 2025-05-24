@@ -24,9 +24,6 @@ int add_to_index(fs::path cur_dir){
     uint32_t count = 0;
 
     for (const auto& entry : it) {
-        cout << "path filename: " << entry.path().filename();
-        cout << "parent filename: " << entry.path().parent_path().filename();
-        cout << "root filename: " << root.filename();
         
         if(entry.is_directory() && entry.path().filename() == ".gcn" && fs::absolute(entry.path().parent_path()) == root){
             it.disable_recursion_pending();
@@ -35,6 +32,8 @@ int add_to_index(fs::path cur_dir){
         if (entry.is_regular_file()) {
             count++;
             uint64_t hash = create_blob(entry.path().string(), objects.string());
+            // debuggin info
+            cout << "path filename: " << entry.path().filename() << "hash: " << hash << endl;
             string path = fs::relative(entry.path(), root).string();
             uint16_t path_len = path.size();
             buffer.write(reinterpret_cast<char*>(&path_len), sizeof(path_len));

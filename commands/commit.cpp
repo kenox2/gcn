@@ -25,7 +25,8 @@ int commit(const string& message){
     fs::path objects = find_file(cur,"objects", true);
     fs::path user_data = find_file(cur,"user_data");
     uint64_t hash_tree = create_tree(objects.string(), index.string());
-    
+//  debuggin info
+    cout << "hash_tree in value: " << hash_tree << endl;
     // get information from user_data 
     ifstream user_file(user_data, ios::in);
     string name;
@@ -40,14 +41,20 @@ int commit(const string& message){
     pair<uint64_t, string> parent_hash = get_hash_from_HEAD(HEAD);
     // create commit
     uint64_t hash_commit = create_commit(objects.string(), message, hash_tree, author, parent_hash.first);
+//  debuggin info
+    cout << "hash_commit value: " << hash_commit << endl;
     // save commit to branch 
+    if(parent_hash.second == ""){
+        cout << "Commit created succesfully but was not assigned to any branch";
+        return 0;
+    }
     fs::path branch_path(parent_hash.second);
     ofstream branch_head(branch_path, ios::binary | ios::out);
     if(!branch_head){
-        cerr << "Failed to open HEAD\n";
+        cerr << "Failed to open branch\n";
         exit(1);
     }
-    branch_head.write(reinterpret_cast<char *>(&parent_hash.second), sizeof(parent_hash.second));
+    branch_head.write(reinterpret_cast<char *>(&hash_commit), sizeof(hash_commit));
 
     // empty out INDEX 
     ofstream(index, ios::binary | ios::out);

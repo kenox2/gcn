@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include "../utils/searching_utils.h"
+#include "../utils/constants.h"
 
 #ifdef _WIN32
     #include <windows.h>
@@ -38,8 +39,8 @@ int create_gcn_dir(const fs::path& dir, const string& username, const string& em
     }
     main_branch = main_branch / "main";
     ofstream main(main_branch, ios::binary | ios::out);
-    string id = "path";
-    head.write(reinterpret_cast<char *>(id.data()), id.size());
+    uint32_t type = static_cast<uint32_t>(FileMode::Path);
+    head.write(reinterpret_cast<char *>(&type), sizeof(type));
     auto rel_main_branch = fs::relative(main_branch, gcn_dir).string();
     head.write(reinterpret_cast<char *>(rel_main_branch.data()),  rel_main_branch.size());
 

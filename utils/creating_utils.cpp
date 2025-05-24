@@ -84,16 +84,16 @@ std::vector<IndexEntry> read_index(const std::string& index_path) {
 
 
 uint64_t write_tree(const string& dir,
+                    const fs::path& root,
                     const string& object_directory,
                     const map<string, vector<IndexEntry>>& trees,
                     const vector<IndexEntry>& entries) {
     std::ostringstream buffer;
 
     for (const auto& entry : entries) {
-        fs::path path(entry.path);
+        fs::path path(root/ entry.path);
         if (path.parent_path().string() == dir) {
             buffer.write(reinterpret_cast<const char*>(&entry.mode), sizeof(entry.mode));
-            buffer.write(" ", 1);
 
             string file_name = path.filename().string();
             buffer.write(file_name.c_str(), file_name.size() + 1);
@@ -103,16 +103,14 @@ uint64_t write_tree(const string& dir,
     }
 
     for (const auto& [subdir, entry] : trees) {
-        bool ez = fs::path(subdir).empty();
         if (fs::path(subdir).parent_path().string() == dir) {
             
-            uint64_t sub_hash = write_tree(subdir, object_directory, trees, entries);
+            uint64_t sub_hash = write_tree(subdir, root, object_directory, trees, entries);
 
             uint32_t mode = static_cast<uint32_t>(FileMode::Tree);
             string dirname = fs::path(subdir).filename().string();
 
             buffer.write(reinterpret_cast<const char*>(&mode), sizeof(mode));
-            buffer.write(" ", 1);
             buffer.write(dirname.c_str(), dirname.size() + 1);
             buffer.write(reinterpret_cast<const char*>(&sub_hash), sizeof(sub_hash));
         }
@@ -140,14 +138,15 @@ uint64_t create_tree(const string& object_directory,const string& index_path) {
     map<string, vector<IndexEntry>> trees;
     for (const auto& entry : entries) {
         fs::path p(entry.path);
-        trees[(root / p).parent_path().string()].push_back(entry);
+        fs::path parent = (root / p).parent_path();
+        trees[parent.lexically_normal().string()].push_back(entry);
     }
-    return write_tree("", object_directory, trees, entries);
+    return write_tree(root.string(), root, object_directory, trees, entries);
 
 }
 
 
-int create_commit(const string& base_directory, const string& message, const uint64_t& tree_hash, const string& author, const uint64_t& parent_hash ){
+uint64_t create_commit(const string& base_directory, const string& message, const uint64_t& tree_hash, const string& author, const uint64_t& parent_hash ){
     
     ostringstream buffer;
     uint32_t tree_label = static_cast<uint32_t>(FileMode::Tree);
@@ -168,9 +167,11 @@ int create_commit(const string& base_directory, const string& message, const uin
 
     string data = buffer.str();
     uint64_t hash = XXH64(data.data(), data.size(), 0);
-
-    string commit_path = base_directory + hash_to_path(hash);
-    fs::create_directories(fs::path(commit_path).parent_path());
+//  debuggin info
+    cout << "hash in create_commit: " << hash << endl;
+    string commit_path_str = base_directory + hash_to_path(hash);
+    fs::path commit_path(commit_path_str);
+    fs::create_directories(commit_path.parent_path());
     ofstream out(commit_path, ios::binary);
     out.write(data.data(), data.size());
 

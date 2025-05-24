@@ -71,3 +71,46 @@ void compress_zlib(ifstream& in_stream, ofstream& out_stream){
 
     deflateEnd(&zs);
 }
+
+void decompress_zlib(std::ifstream& in_stream, std::ofstream& out_stream) {
+    const size_t SIZE = 4096;
+    char in_buffer[SIZE];
+    char out_buffer[SIZE];
+
+    z_stream zs{};
+    zs.zalloc = Z_NULL;
+    zs.zfree = Z_NULL;
+    zs.opaque = Z_NULL;
+
+    if (inflateInit(&zs) != Z_OK) {
+        throw std::runtime_error("inflateInit failed");
+    }
+
+    int ret;
+    do {
+        in_stream.read(in_buffer, SIZE);
+        std::streamsize read_count = in_stream.gcount();
+
+        if (read_count <= 0) break;
+
+        zs.next_in = reinterpret_cast<Bytef*>(in_buffer);
+        zs.avail_in = static_cast<uInt>(read_count);
+
+        do {
+            zs.next_out = reinterpret_cast<Bytef*>(out_buffer);
+            zs.avail_out = SIZE;
+
+            ret = inflate(&zs, Z_NO_FLUSH);
+            if (ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR || ret == Z_MEM_ERROR) {
+                inflateEnd(&zs);
+                throw std::runtime_error("inflate failed");
+            }
+
+            std::streamsize decompressed_size = SIZE - zs.avail_out;
+            out_stream.write(out_buffer, decompressed_size);
+        } while (zs.avail_out == 0);
+
+    } while (ret != Z_STREAM_END);
+
+    inflateEnd(&zs);
+}
