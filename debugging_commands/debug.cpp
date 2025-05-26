@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <fstream>
 #include <filesystem>
-#include "../utils/searching_utils.h"
+#include "../utils/headers/searching_utils.h"
 
 namespace fs = std::filesystem;
 using namespace std;
@@ -64,13 +64,30 @@ void print_tree(const fs::path& tree_path) {
 }
 
 
+void print_branch(fs::path branch_path){
+    ifstream branch(branch_path, ios::binary);
+    uint64_t hash;
+    branch.read(reinterpret_cast<char*>(&hash), sizeof(hash));
+    cout << "commit_hash: " << hash;
+}
+
+
 
 
 
 int main(int argc, char **argv){
     string hash = argv[1];
+    string type = argv[2];
     fs::path object_dir = find_file(fs::current_path(), "objects", true);
-    fs::path file_path = find_file_by_hash(object_dir, hash);
-    print_tree(file_path);
+    fs::path branch = object_dir.parent_path() / "refs/heads" / hash;
+    if(type == "0"){
+        fs::path file_path = find_file_by_hash(object_dir, hash);
+        print_tree(file_path);
+    }else if(type == "1"){
+        fs::path file_path = find_file_by_hash(object_dir, hash);
+        print_commit(file_path);
+    }else if(type == "3"){
+        print_branch(branch);
+    }
     return 0;
 }

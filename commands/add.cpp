@@ -1,9 +1,9 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
-#include "../utils/creating_utils.h"
-#include "../utils/searching_utils.h"
-#include "../utils/constants.h"
+#include "../utils/headers/creating_utils.h"
+#include "../utils/headers/searching_utils.h"
+#include "../utils/headers/constants.h"
 
 namespace fs = std::filesystem;
 using namespace std;

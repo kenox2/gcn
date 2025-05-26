@@ -8,7 +8,6 @@
 #include <filesystem>
 
 uint64_t create_blob(const std::string& input_path, const std::string& object_dir);
-std::vector<IndexEntry> read_index(const std::string& index_path);
 uint64_t write_tree(const std::string& dir,
      const std::filesystem::path& root,
      const std::string& object_directory,

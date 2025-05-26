@@ -1,8 +1,8 @@
 
-#include "../libs/xxhash/xxhash.h"
+#include "../../libs/xxhash/xxhash.h"
 #include <fstream>
 #include <zlib.h>
-#include "./hashing_utils.h"
+#include "../headers/hashing_utils.h"
 
 using namespace std;
 

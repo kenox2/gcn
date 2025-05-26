@@ -1,9 +1,9 @@
 #include <iostream>
 #include <string>
-#include "../utils/reading_utils.h"
-#include "../utils/searching_utils.h"
-#include "../utils/constants.h"
-#include "../utils/recreate_utils.h"
+#include "../utils/headers/reading_utils.h"
+#include "../utils/headers/searching_utils.h"
+#include "../utils/headers/constants.h"
+#include "../utils/headers/recreate_utils.h"
 #include <filesystem>
 #include <unordered_map>
 #include <fstream>
@@ -20,6 +20,7 @@ void write_to_head (const fs::path& head_path,const string& path){
         throw std::runtime_error("HEAD file can't be openend");
     }
     HEAD.write(reinterpret_cast<char *>(&type), sizeof(type));
+    
     HEAD.write(path.data(), path.size());
 }
 
@@ -50,18 +51,18 @@ int switch_(const string& target){
     fs::path commit_path;
     if(map.count(target) > 0){
         // case target is branch
-        fs::path commit_path = map[target];
-        ifstream branch(commit_path, ios::binary | ios::in);
-        if(!branch){
-            cerr << "Could not open branch file";
-            return 1;
-        }
-        branch.read(reinterpret_cast<char*>(&hash), sizeof(hash));
-        branch.close();
-        commit_path= find_file_by_hash(objects_path, hash);
-
+        fs::path branch_path = map[target];
         // insert new branch path into head
-        write_to_head(head_path, commit_path.string());
+        fs::path relative_branch_path = fs::relative(branch_path, objects_path.parent_path());
+        write_to_head(head_path, relative_branch_path.string());
+        if(fs::is_empty(branch_path)){
+            return 0;
+        }
+        // get commit hash
+        uint64_t commit_hash;
+        ifstream branch(branch_path, ios::binary);
+        branch.read(reinterpret_cast<char *>(&commit_hash), sizeof(commit_hash));
+        commit_path = find_file_by_hash(objects_path, commit_hash);
     }else{
         // case target is a hash
         if(target.size() < 4){
@@ -77,6 +78,7 @@ int switch_(const string& target){
         write_to_head(head_path, hash);
     }
     // get tree hash
+
     ifstream commit(commit_path, ios::binary);
     if(!commit){
         cerr << "Commit can't be opened";
@@ -97,6 +99,16 @@ int switch_(const string& target){
 
 
 int main(int argc, char **argv){
+    if(argc != 2){
+        cerr << "Usage: switch <branch_name/hash_commit>\n";
+        exit(1);
+    }
     string arg = argv[1];
-    return switch_(arg);;
+    try{
+        return switch_(arg);
+    }catch(const runtime_error& e){
+        cerr << "ERROR: " << e.what() << endl;
+        return 1;
+    }
+    
 }

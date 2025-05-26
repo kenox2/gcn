@@ -1,13 +1,14 @@
 #include <iostream>
 #include <cstdint>
 #include <filesystem>
-#include "searching_utils.h"
-#include "reading_utils.h"
-#include "recreate_utils.h"
+#include "../headers/searching_utils.h"
+#include "../headers/reading_utils.h"
+#include "../headers/recreate_utils.h"
 #include <vector>
-#include "constants.h"
+#include "../headers/constants.h"
 #include <fstream>
-#include "hashing_utils.h"
+#include "../headers/hashing_utils.h"
+#include <unordered_set>
 
 #ifdef __linux__
     #include <sys/stat.h>
@@ -21,8 +22,8 @@ using namespace std;
 void recreate_dir_from_tree(const fs::path& root_dir, const fs::path& object_dir, const uint64_t& tree_hash) {
     fs::path tree_path = find_file_by_hash(object_dir, tree_hash);
     vector<TreeEntry> entries = get_tree_entries(tree_path);
-
-    for (auto entry : entries) {
+    unordered_set<fs::path> set;
+    for (auto& entry : entries) {
 #ifdef _WIN32
         if (entry.mode == static_cast<uint32_t>(FileMode::Exec)) {
             if (entry.filename.size() < 4 || entry.filename.substr(entry.filename.size() - 4) != ".exe") {
@@ -31,6 +32,7 @@ void recreate_dir_from_tree(const fs::path& root_dir, const fs::path& object_dir
         }
 #endif
         fs::path target_path = root_dir / entry.filename;
+        set.insert(target_path);
 
         if (entry.mode == static_cast<uint32_t>(FileMode::Blob) || entry.mode == static_cast<uint32_t>(FileMode::Exec)) {
             fs::path blob_path = find_file_by_hash(object_dir, entry.hash);
@@ -48,6 +50,14 @@ void recreate_dir_from_tree(const fs::path& root_dir, const fs::path& object_dir
         } else {
             fs::create_directory(target_path);
             recreate_dir_from_tree(target_path, object_dir, entry.hash);
+        }
+    }
+
+    // delete files that are not part of a tree
+    fs::directory_iterator it(root_dir);
+    for(auto& entry : it ){
+        if(set.count(entry.path()) == 0 && entry.path().filename() != ".gcn"){
+            fs::remove_all(entry.path());
         }
     }
 }

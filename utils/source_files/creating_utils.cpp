@@ -1,16 +1,16 @@
 #include <iostream>
 #include <fstream>
-#include "../libs/xxhash/xxhash.h"
+#include "../../libs/xxhash/xxhash.h"
 #include <filesystem>
 #include <zlib.h>
 #include <vector>
 #include <algorithm>
 #include <map>
 #include <cstdint>
-#include "./hashing_utils.h"
-#include "creating_utils.h"
-#include "../utils/constants.h"
-#include "searching_utils.h"
+#include "../headers/hashing_utils.h"
+#include "../headers/creating_utils.h"
+#include "../headers/constants.h"
+#include "../headers/searching_utils.h"
 
 namespace fs = std::filesystem;
 using namespace std;

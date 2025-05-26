@@ -2,10 +2,10 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
-#include "constants.h"
+#include "../headers/constants.h"
 #include <unordered_map>
 #include <string>
-#include "reading_utils.h"
+#include "../headers/reading_utils.h"
 #include <vector>
 
 
@@ -90,6 +90,3 @@ vector<TreeEntry> get_tree_entries(const fs::path& tree_path){
 
     return tree_entries;
 }
-
-
-

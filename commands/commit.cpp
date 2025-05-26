@@ -1,9 +1,9 @@
 #include <iostream>
 #include <cstdint>
 #include <string>
-#include "../utils/creating_utils.h"
-#include "../utils/searching_utils.h"
-#include "../utils/reading_utils.h"
+#include "../utils/headers/creating_utils.h"
+#include "../utils/headers/searching_utils.h"
+#include "../utils/headers/reading_utils.h"
 #include <fstream>
 
 namespace fs = std::filesystem;
@@ -64,6 +64,15 @@ int commit(const string& message){
 
 
 int main(int argc, char* argv[]){
+   if(argc != 2){
+        cerr << "Usage: commit <message>\n";
+        exit(1);
+    }
     string message = argv[1];
-    return commit(message);
+    try {
+        return commit(message);
+    } catch (const std::exception& e) {
+        std::cerr << "ERROR: " << e.what() << '\n';
+        return 1;
+    }
 }

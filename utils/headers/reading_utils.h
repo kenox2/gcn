@@ -21,3 +21,4 @@ struct TreeEntry{
 std::pair<uint64_t, std::string> get_hash_from_HEAD(const std::filesystem::path& head_path);
 std::unordered_map<std::string, std::filesystem::path> get_branches(const std::filesystem::path& gcn_dir);
 std::vector<TreeEntry> get_tree_entries(const std::filesystem::path& tree_path);
+std::vector<IndexEntry> read_index(const std::string& index_path);

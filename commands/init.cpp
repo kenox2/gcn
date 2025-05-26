@@ -2,8 +2,8 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include "../utils/searching_utils.h"
-#include "../utils/constants.h"
+#include "../utils/headers/searching_utils.h"
+#include "../utils/headers/constants.h"
 
 #ifdef _WIN32
     #include <windows.h>
@@ -77,5 +77,11 @@ int main(int argc, char *argv[]){
     }
     string username = argv[1];
     string email = argv[2];
-    return init(fs::current_path(), username, email);
+    try{
+        return init(fs::current_path(), username, email);
+    }catch(const runtime_error e){
+        std::cerr << "ERROR: " << e.what() << '\n';
+        return 1;
+    }
+    
 }
