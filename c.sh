@@ -45,6 +45,22 @@ compile_print_head(){
     g++ commands/print_head.cpp utils/source_files/searching_utils.cpp utils/source_files/hashing_utils.cpp libs/xxhash/xxhash.c utils/source_files/reading_utils.cpp -g -lz -o print_head
 }
 
+compile_log(){
+    echo "Compiling log..."
+    g++ commands/log.cpp utils/source_files/traversing_utils.cpp utils/source_files/searching_utils.cpp utils/source_files/hashing_utils.cpp libs/xxhash/xxhash.c utils/source_files/reading_utils.cpp -g -lz -o log
+}
+
+compile_merge(){
+    echo "Compiling merge..."
+    g++ commands/merge.cpp utils/source_files/traversing_utils.cpp utils/source_files/searching_utils.cpp utils/source_files/hashing_utils.cpp libs/xxhash/xxhash.c utils/source_files/reading_utils.cpp -g -lz -o merge
+}
+
+compile_branch_display(){
+    echo "Compiling branch_display..."
+    g++ commands/branch_display.cpp  utils/source_files/searching_utils.cpp utils/source_files/hashing_utils.cpp libs/xxhash/xxhash.c utils/source_files/reading_utils.cpp -g -lz -o display
+}
+
+
 # If no arguments, compile all
 if [ $# -eq 0 ]; then
     compile_add
@@ -54,7 +70,10 @@ if [ $# -eq 0 ]; then
     compile_debug
     compile_branch
     compile_branch_rm
+    compile_branch_display
     compile_print_head
+    compile_log
+    compile_merge
 else
     for arg in "$@"; do
         case $arg in
@@ -81,6 +100,15 @@ else
                 ;;
             print_head)
                 compile_print_head
+                ;;
+            log)
+                compile_log
+                ;;
+            merge)
+                compile_merge
+                ;;
+            branch_display)
+                compile_branch_display
                 ;;
             *)
                 echo "Unknown target: $arg"

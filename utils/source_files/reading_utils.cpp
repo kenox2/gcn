@@ -90,3 +90,45 @@ vector<TreeEntry> get_tree_entries(const fs::path& tree_path){
 
     return tree_entries;
 }
+
+
+
+void get_commit_content(CommitEntry& entry, const fs::path& commit_path) {
+    std::ifstream commit(commit_path, std::ios::binary);
+    if (!commit) {
+        throw std::runtime_error("Failed to open commit file: " + commit_path.string());
+    }
+
+    uint32_t tree_mode;
+    uint64_t tree_hash;
+    commit.read(reinterpret_cast<char*>(&tree_mode), sizeof(tree_mode));
+    commit.read(reinterpret_cast<char*>(&entry.tree_hash), sizeof(entry.tree_hash));
+
+    while (true) {
+        std::string id(6, '\0');
+        commit.read(&id[0], 6);
+        if (!commit || id != "parent") {
+            break;
+        }
+
+        uint64_t parent_hash;
+        commit.read(reinterpret_cast<char*>(&parent_hash), sizeof(parent_hash));
+        if (!commit) break;
+
+        entry.parents.push_back(parent_hash);
+    }
+
+    std::getline(commit, entry.author, '\0');
+
+    std::string message((std::istreambuf_iterator<char>(commit)), std::istreambuf_iterator<char>());
+    entry.message = message;
+}
+
+
+uint64_t get_hash_from_commit(const fs::path& commit_path){
+    if(fs::is_empty(commit_path)) throw std::invalid_argument("commit is empty");
+    uint64_t hash;
+    ifstream commit(commit_path, ios::binary);
+    commit.read(reinterpret_cast<char *>(&hash), sizeof(hash));
+    return hash;
+}

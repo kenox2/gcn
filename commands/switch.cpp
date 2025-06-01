@@ -15,7 +15,7 @@ using namespace std;
 
 void write_to_head (const fs::path& head_path,const string& path){
     uint32_t type = static_cast<uint32_t>(FileMode::Path); 
-    ofstream HEAD(head_path, ios::binary | ios::in);
+    ofstream HEAD(head_path,  ios::binary | ios::out);
     if(!HEAD){
         throw std::runtime_error("HEAD file can't be openend");
     }
@@ -26,7 +26,7 @@ void write_to_head (const fs::path& head_path,const string& path){
 
 void write_to_head(const fs::path& head_path, uint64_t& hash){
     uint32_t type = static_cast<uint32_t>(FileMode::Commit); 
-    ofstream HEAD(head_path, ios::binary | ios::in);
+    ofstream HEAD(head_path,  ios::binary | ios::out);
     if(!HEAD){
             throw std::runtime_error("HEAD file can't be openend");
     }

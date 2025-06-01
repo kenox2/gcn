@@ -155,11 +155,11 @@ uint64_t create_commit(const string& base_directory, const string& message, cons
 
     if (parent_hash != 0) {
         string parent_label = "parent";
-        buffer.write(parent_label.c_str(), parent_label.size() + 1);
+        buffer.write(parent_label.c_str(), parent_label.size());
         buffer.write(reinterpret_cast<const char*>(&parent_hash), sizeof(parent_hash));
     }
 
-    string author_label = "author ";
+    string author_label = "author";
     buffer.write(author_label.c_str(), author_label.size());
     buffer.write(author.c_str(), author.size() + 1);
 

@@ -33,7 +33,7 @@ int commit(const string& message){
     string email;
     getline(user_file, name);
     getline(user_file, email);
-    name = name.substr(5);
+    name = name.substr(9);
     email = email.substr(6);
     string author = name + " " + email;
 
