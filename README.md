@@ -1,4 +1,4 @@
-# GCN – Git Clone, Nearly
+# GCN – Git Clone
 
 GCN is a minimal, low-level version control system inspired by Git. It handles blobs, trees, commits, branching, and merging using binary formats and hashed content. The project is implemented in C++ and is intended as a learning tool to explore how Git-like systems work under the hood.
 
