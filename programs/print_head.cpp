@@ -9,7 +9,7 @@ using namespace std;
 void print_head(){
     fs::path head_path = find_file(fs::current_path(), "HEAD");
     pair<uint64_t, string> head = get_hash_from_HEAD(head_path);
-      cout << "Current branch: " << head.second
+    cout << "Current branch: " << head.second
          << "\nTop branch commit: " << (head.first != 0 ? to_string(head.first) : "none") << endl;
 
 }

@@ -1,0 +1,82 @@
+#!/bin/bash
+
+set -e
+
+
+help(){
+    echo -e "commands list:"
+    for cmd in ${!all_cmds[@]}
+    do
+        printf  "\t%-10s %s\n" "$cmd" "${all_cmds[$cmd]}"
+    done
+}
+
+
+declare -A common_cmds=(
+    [init]="Create GCN repository"
+    [add]="Add file to staging area"
+    [commit]="Record changes to repository" 
+)
+
+declare -A all_cmds=(
+    [init]="Create GCN repository"
+    [add]="Add file to staging area"
+    [commit]="Record changes to repository" 
+    [branch]="List, create or display branches"
+    [switch]="Switch branches or switch to commit" 
+    [merge]="Merge two branches"
+    [log]="Show commit logs"
+    [head]="Show current branch"
+    [help]="Show information about available commands"
+)
+
+if [ $# -eq 0 ]; then
+    echo -e "usage: gcn <command> [<args>]\ncommonly used commands:"
+    for cmd in "${!common_cmds[@]}"; do
+        printf "\t%-10s %s\n" "$cmd" "${common_cmds[$cmd]}"
+    done
+    printf  "For more information use:\n\tgcn help" 
+    exit 1
+fi
+
+SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+
+case $1 in
+    init)
+        "${SCRIPT_DIR}/init.exe" ${@:2}
+        ;;
+    add)
+        "${SCRIPT_DIR}/add.exe" ${@:2}
+        ;;
+    commit)
+        "${SCRIPT_DIR}/commit.exe" ${@:2}
+        ;;
+    branch)
+        "${SCRIPT_DIR}/branch.exe" ${@:2}
+        ;;
+    switch)
+        "${SCRIPT_DIR}/switch.exe" ${@:2}
+        ;;
+    merge)
+        head="$(${SCRIPT_DIR}/get_head)"
+        "${SCRIPT_DIR}/merge.exe" ${@:2}
+        "${SCRIPT_DIR}/commit" "merged $2"
+        "${SCRIPT_DIR}/switch" $head
+        ;;
+    log)
+        "${SCRIPT_DIR}/log.exe" ${@:2}
+        ;;
+    head)
+        "${SCRIPT_DIR}/print_head"
+        ;;
+    help)
+        help
+        ;;
+    *)
+        echo "$1 is not a valid command" 
+        exit 0
+        ;;
+esac
+    
+
+
