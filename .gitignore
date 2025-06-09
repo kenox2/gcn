@@ -1,0 +1,6 @@
+.gcn
+.vscode
+.debugging_commands
+test
+*.exe
+.gitignore

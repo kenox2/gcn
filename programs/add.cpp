@@ -2,17 +2,19 @@
 #include <filesystem>
 #include <fstream>
 #include <unordered_map>
+#include <optional>
 #include "../utils/headers/creating_utils.h"
 #include "../utils/headers/searching_utils.h"
 #include "../utils/headers/constants.h"
 #include "../utils/headers/hashing_utils.h"
+
 
 namespace fs = std::filesystem;
 using namespace std;
 
 template <typename Stream>
 void write_index_entry(Stream& out, const fs::path& file_path, const fs::path& root, const fs::path& objects, uint64_t& hash) {
-    string path = fs::relative(file_path, root).string();
+    string path = file_path.string();
     uint16_t path_len = path.size();
     out.write(reinterpret_cast<char*>(&path_len), sizeof(path_len));
     out.write(path.data(), path.size());
@@ -47,27 +49,43 @@ void delete_blob(fs::path object_path, uint64_t hash){
 
 
 
-
-void delete_non_existing_index_entries(uint32_t& count, fs::path objects_path, vector<IndexEntry>& index_entries){
-    for(auto it = index_entries.begin(); it != index_entries.end(); ){
-        fs::path absolute_path = fs::absolute(it->path);
-        if(!fs::exists(absolute_path)){
-            index_entries.erase(it);
-            delete_blob(objects_path, it->hash);
-            --count;
-        }else it++;
-        
+bool is_subpath(const fs::path& base, const fs::path& potential_sub) {
+    try {
+        fs::path rel = fs::relative(potential_sub, base);
+        // If the relative path goes up (starts with ".."), it's not a subpath
+        return !rel.empty() && *rel.begin() != "..";
+    } catch (const fs::filesystem_error& e) {
+        // Happens if paths are on different root devices or invalid
+        return false;
     }
-
 }
 
-unordered_map<fs::path, IndexEntry> load_curr_ind(uint32_t& count, string index_path, fs::path root, fs::path objects_path){
+
+
+void delete_non_existing_index_entries(
+    uint32_t& count,
+    const fs::path& objects_path,
+    const fs::path& base_dir_abs,
+    const fs::path& root,
+    std::unordered_map<fs::path, IndexEntry>& index_entries
+) {
+    for (auto it = index_entries.begin(); it != index_entries.end(); ) {
+        const auto& [path, entry] = *it;
+        fs::path absolute_path = fs::absolute(root / entry.path);
+        if (is_subpath(base_dir_abs, absolute_path)) {
+            if (!fs::exists(absolute_path)) {
+                it = index_entries.erase(it);
+                delete_blob(objects_path, entry.hash);
+                --count;
+                continue;
+            }
+        }
+        ++it;
+    }
+}
+
+unordered_map<fs::path, IndexEntry> load_curr_ind(uint32_t& count, const string& index_path, const fs::path& root, const fs::path& objects_path){
     vector<IndexEntry> entries = read_index(index_path);
-    delete_non_existing_index_entries( count, objects_path,entries);
-    //  change count 
-    fstream index_file(index_path, ios::binary | ios::in | ios::out);
-    index_file.write(reinterpret_cast<char*>(&count), sizeof(count));
-    index_file.seekp(0,ios::end);
     
     unordered_map<fs::path, IndexEntry> map;
     for (const auto& entry : entries) {
@@ -82,7 +100,8 @@ unordered_map<fs::path, IndexEntry> load_curr_ind(uint32_t& count, string index_
 
 
 template <typename Stream>
-void rewrite_index(Stream& index_file, const unordered_map<fs::path, IndexEntry>& index_entries, const fs::path& root, const fs::path& objects){
+void rewrite_index(Stream& index_file, unordered_map<fs::path, IndexEntry>& index_entries, const fs::path& root, const fs::path& objects, uint32_t& count, optional<fs::path> base_dir = nullopt){
+    if(base_dir.has_value()) delete_non_existing_index_entries(count, objects, base_dir.value(), root, index_entries);
     for(auto& entry : index_entries){
         auto [path, index_entry] = entry;
         write_index_entry(index_file, path, root, objects, index_entry.hash);
@@ -101,10 +120,7 @@ uint32_t get_count_from_ind(fs::path index_path){
 
 
 
-// i need to create a list of all files that are supposed to be stored in index 
-//  then for a singl file i check if its already in index and does it have the same hash. 
-// if yes and yes i rewrite entire index if yes and not i dont do shit
-// if no then i just append new file at the end
+
 int add_to_index(fs::path cur_path) {
     fs::path curr_dir = fs::current_path();
     fs::path index = find_file(curr_dir, "INDEX");
@@ -126,7 +142,9 @@ int add_to_index(fs::path cur_path) {
         if(index_entries.count(rel_path) > 0){
             IndexEntry& entry = index_entries[rel_path];
             if(entry.hash == hash) return 0;
+            // modified
             else{
+                delete_blob(objects, entry.hash);
                 entry.hash = hash;
                 ofstream index_file(index, ios::binary);
                  if (!index_file) {
@@ -134,8 +152,7 @@ int add_to_index(fs::path cur_path) {
                     return 1;
                 }
                 index_file.write(reinterpret_cast<char*>(&count), sizeof(count));
-                rewrite_index(index_file, index_entries, root, objects); 
-                delete_blob(objects, hash);
+                rewrite_index(index_file, index_entries, root, objects, count);   
             }
         }else{
             ++count;
@@ -146,12 +163,15 @@ int add_to_index(fs::path cur_path) {
             }
             index_file.write(reinterpret_cast<char*>(&count), sizeof(count));
             index_file.seekp(0,ios::end);
-            write_index_entry(index_file, cur_path, root, objects, hash);
+            fs::path rel_path = fs::relative(cur_path, root);
+            write_index_entry(index_file, rel_path, root, objects, hash);
         }
         return 0;
     } else {
 
+        // get all valid entries 
         for (fs::recursive_directory_iterator it(cur_path), end; it != end; ++it) {
+
             if (it->is_directory() && it->path().filename().string() == ".gcn" &&
                 fs::absolute(it->path().parent_path()) == root) {
                 it.disable_recursion_pending();
@@ -162,17 +182,12 @@ int add_to_index(fs::path cur_path) {
                 fs::path rel_path = fs::relative(it->path(), root);
                 uint64_t hash = create_blob(it->path().string(), objects.string());
                 if(index_entries.count(rel_path) > 0){
-                    IndexEntry entry = index_entries[rel_path];
+                    IndexEntry& entry = index_entries[rel_path];
                     if(entry.hash == hash) continue;
+                    // modified entry
                     else{
+                        delete_blob(objects, entry.hash);
                         entry.hash = hash;
-                        ofstream index_file(index, ios::binary);
-                        if (!index_file) {
-                            cerr << "Failed to open index file.\n";
-                            return 1;
-                        }
-                        index_file.write(reinterpret_cast<char*>(&count), sizeof(count));
-                        delete_blob(objects, hash);
                     }
                 }
                 else{
@@ -183,7 +198,7 @@ int add_to_index(fs::path cur_path) {
 #ifdef _WIN32
                     mode = static_cast<uint32_t>(FileMode::Blob);
 #else
-                    auto perms = fs::status(it_path->).permissions();
+                    auto perms = it->status().permissions();
                     mode = static_cast<uint32_t>((perms & fs::perms::owner_exec) ? FileMode::Exec : FileMode::Blob);
 #endif
 
@@ -198,9 +213,11 @@ int add_to_index(fs::path cur_path) {
             cerr << "Failed to open index file.\n";
             return 1;
         }
-
         index_file.write(reinterpret_cast<char *>(&count), sizeof(count));
-        rewrite_index(index_file, index_entries, root, objects); 
+        rewrite_index(index_file, index_entries, root, objects, count, cur_path); 
+        index_file.seekp(0);
+        index_file.write(reinterpret_cast<char *>(&count), sizeof(count));
+        
          
         return 0;
     }
