@@ -70,15 +70,15 @@ GCN is a minimal, low-level version control system inspired by Git. It handles b
 | Command                           | Description                                                           |
 |-----------------------------------|-----------------------------------------------------------------------|
 | `gcn init <username> <email>`     | Initialize a new GCN repo and store user identity                     |
-| `gcn add <dir_path>`              | Stage all files in a directory. Does not handle single files (yet)    |
-| `gcn commit <message>`            | Commit staged changes with a message                                  |
+| `gcn add <path>`                  | Add file to staging area.                                             |
+| `gcn commit <message>`            | Record changes to repository                                          |
 | `gcn switch <branch or hash>`     | Switch to a branch or commit (first 4+ digits of hash supported)      |
-| `gcn branch [<rm>][<branch_name>]`| Display, create, remove branches                                      |                                            
+| `gcn branch [<rm>][<branch_name>]`| List, create or display branches                                      |                                            
 | `gcn merge <branch_name>`         | Merge given branch into current one. Conflicts abort the operation    |
 | `gcn log <branch_name or all>`    | Show logs in topological order (via DFS + postorder traversal)        |
 | `gcn print_head`                  | Show the current HEAD (commit or branch)                              |
 
-> 💡 `gcn help` will show the most commonly used commands.
+> 💡 `gcn help` will list all available commands.
 
 ---
 
