@@ -15,8 +15,6 @@ GCN is a minimal, low-level version control system inspired by Git. It handles b
 
 ## 🧱 Repository Structure
 
-The project is composed of several small programs, each representing a command. All commands except `merge` are implemented as separate programs. Shared logic and utilities are grouped under helper modules.
-
 ### Internal Directory Structure (after `init`):
 ```
 /<your_project_dir>
