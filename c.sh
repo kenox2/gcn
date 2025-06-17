@@ -61,6 +61,19 @@ compile_branch_display(){
 }
 
 
+compile_get_head(){
+    echo "Compiling get_head..."
+    g++ programs/get_head.cpp  utils/source_files/searching_utils.cpp utils/source_files/hashing_utils.cpp libs/xxhash/xxhash.c utils/source_files/reading_utils.cpp -g -lz -o get_head  
+}
+
+
+
+compile_get_head_hash(){
+    echo "Compiling get_head_hash..."
+    g++ programs/get_head_hash.cpp  utils/source_files/searching_utils.cpp utils/source_files/hashing_utils.cpp libs/xxhash/xxhash.c utils/source_files/reading_utils.cpp -g -lz -o get_head_hash
+}
+
+
 # If no arguments, compile all
 if [ $# -eq 0 ]; then
     compile_add
@@ -74,6 +87,8 @@ if [ $# -eq 0 ]; then
     compile_print_head
     compile_log
     compile_merge
+    compile_get_head
+    compile_get_head_hash
 else
     for arg in "$@"; do
         case $arg in
@@ -109,6 +124,12 @@ else
                 ;;
             branch_display)
                 compile_branch_display
+                ;;
+            get_head)
+                compile_get_head
+                ;;
+            get_head_hash)
+                compile_get_head_hash
                 ;;
             *)
                 echo "Unknown target: $arg"

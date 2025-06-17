@@ -45,7 +45,7 @@ int commit(const string& message){
     cout << "hash_commit value: " << hash_commit << endl;
     // save commit to branch 
     if(parent_hash.second == ""){
-        cout << "Commit created succesfully but was not assigned to any branch";
+        cout << "Loose commit (not assigned to anything)";
         return 0;
     }
     fs::path branch_path(parent_hash.second);

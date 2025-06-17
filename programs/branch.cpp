@@ -51,7 +51,7 @@ int branch(const string& branch_name,const string& hash){
 }
 
 int main(int argc, char **argv){
-    if(argc > 3){
+    if(argc > 3 || argc == 1){
         cerr << "Usage: branch <branch_name> optional<hash>";
         return 1;
     }

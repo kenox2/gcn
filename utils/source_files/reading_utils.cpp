@@ -23,7 +23,7 @@ pair<uint64_t, string> get_hash_from_HEAD(const fs::path& head_path) {
     fs::path gcn_dir = head_path.parent_path();
     // Read the 4-byte type
     uint32_t type;
-    char type_buf[4];
+   
     HEAD.read(reinterpret_cast<char*>(&type), sizeof(type));
     uint64_t hash; 
     if (type == static_cast<uint32_t>(FileMode::Path)) {
